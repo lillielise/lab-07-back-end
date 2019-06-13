@@ -43,12 +43,12 @@ Actual time needed to complete: 1 Hour
 
 ***Number and name of feature:*** 
 
-Estimate of time needed to complete: _____
+Estimate of time needed to complete: 3. Database Setup
 
-Start time: _____
+Start time: 12:15
 
-Finish time: _____
+Finish time: 12:30
 
-Actual time needed to complete: _____  
+Actual time needed to complete: 15 minutes  
 
 ## Uses MIT License

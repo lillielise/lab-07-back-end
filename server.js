@@ -7,6 +7,14 @@ const cors = require('cors'); //cross origin request sharing
 
 // Application Setup
 const PORT = process.env.PORT;
+const DATABASE_URL = process.env.DATABASE_URL;
+
+//SQL Database Setup
+const pg = require('pg');
+const client = new pg.Client(DATABASE_URL);
+client.connect();
+client.on('error', error => console.error(error));
+
 const app = express();
 const superagent = require('superagent');
 app.use(cors());
