@@ -41,18 +41,16 @@ function searchTimeForcast(query) {
 }
 
 
-
 function searchToLatLong(request, response) {
   try {
 
     const URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${request.query.data}&key=${process.env.GEO_API_KEY}`;
 
-    console.log(URL)
-
     return superagent.get(URL)
 
       .then(geoResponse => {
         const location = new Location(request.query.data, geoResponse.body);
+        cacheLocation(location, client);
         response.send(location);
       })
       .catch(error => {
@@ -64,6 +62,17 @@ function searchToLatLong(request, response) {
     handleError(error, response);
   }
 }
+
+function cacheLocation(location, client) {
+  const insertSQL = `
+        INSERT INTO locations (search_query, formatted_query, latitude, longitude)
+        VALUES('${location.search_query}', '${location.formated_query}', ${location.latitude}, ${location.longitude});
+        `;
+  // console.log("looking for location", insertSQL, "///////////////////////")
+  return client.query(insertSQL).then(results => location);
+
+}
+
 
 
 function Location(query, geoData) {
@@ -86,3 +95,6 @@ function handleError(error, response) {
 app.listen(PORT, () => console.log(`App is listening on ${PORT}`));
 
 
+
+INSERT INTO locations (search_query, formatted_query, latitude, longitude)
+VALUES('SEATTLE', 'SEATTLE, WA', 555, 444;
