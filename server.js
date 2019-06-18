@@ -23,6 +23,7 @@ app.use(cors());
 
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather);
+app.get('/events', handleEvents);
 
 
 ////////////////// LOCATION //////////////////////
@@ -58,7 +59,7 @@ function getLocationFromApi(query, client, superagent) {
   return superagent
     .get(URL)
     .then(response =>{
-      console.log(response.body)
+      // console.log(response.body)
       return new Location(query, response.body.results[0])})
     .then(location => cacheLocation(location, client));
 }
@@ -73,13 +74,13 @@ function cacheLocation(location, client) {
 `;
 
   return client.query(insertSQL).then(results => {
-    console.log('location results from db', results);
+    // console.log('location results from db', results);
 
-    console.log('location results id', results.rows[0].id);
+    // console.log('location results id', results.rows[0].id);
 
     location.id = results.rows[0].id;
 
-    console.log(' new location object ', location);
+    // console.log(' new location object ', location);
 
     return location;
   });
@@ -97,9 +98,6 @@ function Location(query, geoData) {
 function handleWeather(req, res) {
 
 
-  // console.log('************* handle weather', req.query.data);
-  console.log('************* handle weather', req.query.data);
-
   getForecasts(req.query.data, client, superagent)
     .then(forecasts => res.send(forecasts))
     .catch(error => handleError(error, res));
@@ -107,14 +105,14 @@ function handleWeather(req, res) {
 
 function getForecasts(query, client, superagent) {
 
- 
+
 
 
   return checkStoredWeather(query, client).then(weathers => {
 
     //if weathers is found, return the weathers
     if (weathers.length > 0) {
-      console.log('from cache ', weathers);
+      console.log('from cache ');
       return weathers;
     }
 
@@ -129,7 +127,6 @@ function getForecasts(query, client, superagent) {
 function checkStoredWeather(query, client) {
 
   const SQL = `SELECT * FROM weathers WHERE location_id=${query.id}`;
-  console.log(SQL)
   return client.query(SQL).then(results => {
     return results.rows;
   });
@@ -138,7 +135,7 @@ function checkStoredWeather(query, client) {
 }
 
 function getWeatherFromAPI(query, client, superagent) {
-  console.log('query from weather api function ', query);
+  console.log('query from weather api function ');
   const URL = `https://api.darksky.net/forecast/${
     process.env.DARK_SKY_API
   }/${query.latitude},${query.longitude}`;
@@ -155,7 +152,7 @@ function getWeatherFromAPI(query, client, superagent) {
 }
 
 function cacheWeather(weather, client, locationId) {
-  console.log('caching weather data ', weather, locationId);
+  // console.log('caching weather data ', weather, locationId);
   const SQL = `INSERT INTO weathers (forecast, time, location_id) VALUES ('${
     weather.forecast
   }', '${weather.time}', ${locationId});`;
@@ -169,15 +166,37 @@ function Weather(dayData) {
 
 
 
-function Weather(dayData) {
-  this.forecast = dayData.summary;
-  this.time = new Date(dayData.time * 1000).toString().slice(0, 15);
-
-}
 function handleError(error, response) {
   console.error(error);
   response.status(500).send('Nope!');
 }
+
+////////////////////////EVENTBRITE////////////////////////////
+function handleEvents(req, res){
+
+  getEvents(req.query.data, client, superagent)
+    .then(events => res.send(events))
+    .catch(error => handleError(error,res))
+}
+
+function getEvents(address, client, superagent){
+  const URL = `https://www.eventbriteapi.com/v3/events/search?location.address=${address.search_query}&location.within=1km`
+
+
+  return superagent.get(URL)
+    .set('Authorization', `Bearer ${process.env.EVENT_API_KEY}`)
+    .then(data => data.body.events.map(event => new Event(event)));
+}
+
+
+function Event(event) {
+  this.link = event.url,
+  this.name = event.name.text,
+  this.event_date = event.start.local,
+  this.summary = event.summary
+
+}
+
 
 
 app.listen(PORT, () => console.log(`App is listening on ${PORT}`));
