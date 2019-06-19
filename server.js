@@ -23,7 +23,8 @@ app.use(cors());
 
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather);
-app.get('/events', handleEvents);
+// app.get('/events', handleEvents);
+app.get('/yelp', handleYelp);
 
 
 ////////////////// LOCATION //////////////////////
@@ -171,33 +172,54 @@ function handleError(error, response) {
   response.status(500).send('Nope!');
 }
 
-////////////////////////EVENTBRITE////////////////////////////
-function handleEvents(req, res){
+// ////////////////////////EVENTBRITE////////////////////////////
+// function handleEvents(req, res){
 
-  getEvents(req.query.data, client, superagent)
-    .then(events => res.send(events))
-    .catch(error => handleError(error,res))
+//   getEvents(req.query.data, client, superagent)
+//     .then(events => res.send(events))
+//     .catch(error => handleError(error,res))
+// }
+
+// function getEvents(address, client, superagent){
+//   const URL = `https://www.eventbriteapi.com/v3/events/search?location.address=${address.search_query}&location.within=1km`
+
+
+//   return superagent.get(URL)
+//     .set('Authorization', `Bearer ${process.env.EVENT_API_KEY}`)
+//     .then(data => data.body.events.map(event => new Event(event)));
+// }
+
+
+// function Event(event) {
+//   this.link = event.url,
+//   this.name = event.name.text,
+//   this.event_date = event.start.local,
+//   this.summary = event.summary
+
+// }
+//////////////////// YELP////////////////////////
+function handleYelp(request, response) {
+  console.log('Yelp Request', request.query.data);
+  const URL = `https://api.yelp.com/v3/businesses/search?location=${request.query.data.search_query}`;
+  superagent.get(URL)
+    .set('Authorization', `Bearer ${process.env.YELP_API}`)
+    .then(result => {
+
+      let business = [];
+      result.body.businesses.forEach(value => {
+        business.push(new Yelp(value))
+      })
+      console.log(business);
+      response.send(business);
+    })
 }
 
-function getEvents(address, client, superagent){
-  const URL = `https://www.eventbriteapi.com/v3/events/search?location.address=${address.search_query}&location.within=1km`
-
-
-  return superagent.get(URL)
-    .set('Authorization', `Bearer ${process.env.EVENT_API_KEY}`)
-    .then(data => data.body.events.map(event => new Event(event)));
+function Yelp (data) {
+  this.name = data.name;
+  this.image_url = data.image_url;
+  this.price = data.price;
+  this.url = data.url;
 }
-
-
-function Event(event) {
-  this.link = event.url,
-  this.name = event.name.text,
-  this.event_date = event.start.local,
-  this.summary = event.summary
-
-}
-
-
 
 app.listen(PORT, () => console.log(`App is listening on ${PORT}`));
 
